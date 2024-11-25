@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversor de coordenadas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+<style>
+    body {
+        background-color: #ADD8E6; /* Celeste */
+        font-family: Calibri, sans-serif;
+    }
+    label {
+        font-family: Calibri, sans-serif;
+    }
+    #coordX, #coordY, #latitud, #longitud {
+        font-weight: bold;
+    }
+</style>
+<script>
+   // Definir la proyección de origen y destino
+var projectionFrom = '+proj=tmerc +lat_0=-90 +lon_0=-60 +k=1 +x_0=5500000 +y_0=0 +ellps=intl +towgs84=-148,136,90,0,0,0,0 +units=m +no_defs';
+var projectionTo = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
+
+function calcularCoordenadas() {
+    var coordX = parseFloat(document.getElementById('coordX').value.trim().replace(',', '.'));
+    var coordY = parseFloat(document.getElementById('coordY').value.trim().replace(',', '.'));
+
+    // Crear un objeto de proyección desde WGS84 a la proyección deseada
+    var projWGS84ToTarget = proj4(projectionFrom, projectionTo);
+
+    // Convertir las coordenadas X e Y
+    var coordsTarget = projWGS84ToTarget.forward([coordX, coordY]);
+
+    // Mostrar las coordenadas convertidas
+    mostrarCoordenadas(coordsTarget[1], coordsTarget[0]);
+}
+
+function mostrarCoordenadas(latitud, longitud) {
+    var latitudDecimal = latitud.toFixed(6);
+    var longitudDecimal = longitud.toFixed(6);
+
+    // Mostrar las coordenadas en formato Grados, minutos, segundos
+    if (document.getElementById('coordGradosMinutosSegundos').checked) {
+        document.getElementById('latitud').value = convertirAGradosMinutosSegundos(latitud, 'latitud');
+        document.getElementById('longitud').value = convertirAGradosMinutosSegundos(longitud, 'longitud');
+    } else {
+        // Mostrar las coordenadas en formato Coordenadas decimales
+        document.getElementById('latitud').value = latitudDecimal.replace('.', ',') + '°';
+        document.getElementById('longitud').value = longitudDecimal.replace('.', ',') + '°';
+    }
+}
+
+function convertirAGradosMinutosSegundos(coordenada, tipo) {
+    var direccion = '';
+    if (tipo === 'latitud') {
+        direccion = coordenada < 0 ? 'S' : 'N';
+    } else if (tipo === 'longitud') {
+        direccion = coordenada < 0 ? 'O' : 'E';
+    }
+
+    coordenada = Math.abs(coordenada);
+    var grados = Math.floor(coordenada);
+    var minutosDecimal = (coordenada - grados) * 60;
+    var minutos = Math.floor(minutosDecimal);
+    var segundos = ((minutosDecimal - minutos) * 60).toFixed(2);
+
+    return grados + '°' + minutos + "'" + segundos + '"' + direccion;
+}
+
+function habilitarGradosMinutosSegundos() {
+    document.getElementById('latitud').value = '';
+    document.getElementById('longitud').value = '';
+    document.getElementById('latitud').placeholder = 'Ejemplo: 31°14\'43.38"S';
+    document.getElementById('longitud').placeholder = 'Ejemplo: 59°56\'23.07"O';
+}
+
+function habilitarCoordenadasDecimales() {
+    document.getElementById('latitud').value = '';
+    document.getElementById('longitud').value = '';
+    document.getElementById('latitud').placeholder = 'Ejemplo: -31,245383°';
+    document.getElementById('longitud').placeholder = 'Ejemplo: -59,939742°';
+}
+</script>
+</head>
+<body>
+    <h1>Conversor de coordenadas SDG a Coordenadas Google Earth</h1>
+    <input type="radio" id="coordGradosMinutosSegundos" name="coordFormat" checked onclick="habilitarGradosMinutosSegundos()">
+    <label for="coordGradosMinutosSegundos">Grados, minutos, segundos</label>
+    <br>
+    <input type="radio" id="coordDecimales" name="coordFormat" onclick="habilitarCoordenadasDecimales()">
+    <label for="coordDecimales">Coordenadas decimales</label>
+    <br><br>
+    <label for="coordX">Coordenada X:</label>
+    <input type="text" id="coordX" placeholder="Ejemplo: 5505822,00"><br><br>
+    <label for="coordY">Coordenada Y:</label>
+    <input type="text" id="coordY" placeholder="Ejemplo: 6543997,00"><br><br>
+    <button onclick="calcularCoordenadas()">Calcular</button><br><br>
+    <label for="latitud">Latitud:</label>
+    <input type="text" id="latitud" readonly><br><br>
+    <label for="longitud">Longitud:</label>
+    <input type="text" id="longitud" readonly><br><br>
+</body>
+</html>
